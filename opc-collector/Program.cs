@@ -11,10 +11,10 @@ namespace OpcCollector
     {
         static void Main(string[] args)
         {
-            ConfigMgr.Init(@"C:\Users\haidao\Desktop\opc-collector\opc-collector\config.yaml");
+            ConfigMgr.Init(@"config.yaml");
 
             var myOpcSample = new OpcSample();
-            myOpcSample.Run2();
+            myOpcSample.Run();
         }
     }
 }

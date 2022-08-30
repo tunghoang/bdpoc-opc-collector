@@ -102,6 +102,32 @@ namespace OpcCollector.Collector
             _subscription = null;
         }
 
+        public void Pause()
+        {
+            // Set subscription inactive
+            if(!_subscription.State.Active)
+            {
+                return;
+            }
+
+            var _state = (TsCDaSubscriptionState)_subscription.State.Clone();
+            _state.Active = false;
+            _subscription.ModifyState((int)TsCDaStateMask.Active, _state);
+        }
+
+        public void Resume()
+        {
+            // Set subscription active
+            if (_subscription.State.Active)
+            {
+                return;
+            }
+
+            var _state = (TsCDaSubscriptionState)_subscription.State.Clone();
+            _state.Active = true;
+            _subscription.ModifyState((int)TsCDaStateMask.Active, _state);
+        }
+
         public TsCDaItemResult[] AddItems(TsCDaItem[] items)
         {
             var results = new bool[items.Length];
@@ -132,7 +158,7 @@ namespace OpcCollector.Collector
             {
                 if (itemResults[i].Result.IsError())
                 {
-                    Console.WriteLine($"   Item {itemResults[i].ItemName} could not be added to the group.");
+                    Console.WriteLine($"   Item {itemResults[i].ItemName} could not be removed from group.");
                     results[i] = false;
                 }
                 else

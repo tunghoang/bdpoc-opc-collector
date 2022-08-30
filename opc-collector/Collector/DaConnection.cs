@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Technosoftware.DaAeHdaClient;
 using Technosoftware.DaAeHdaClient.Da;
 
 namespace OpcCollector.Collector
 {
-    public class DaConnection
+    public class DaConnection : IDisposable
     {
         internal TsCDaServer _server = new TsCDaServer();
 
@@ -19,6 +21,25 @@ namespace OpcCollector.Collector
         public void Connect(string url)
         {
             _server.Connect(url);
+        }
+
+        public void Disconnect()
+        {
+            if (_server.IsConnected)
+            {
+                foreach(var s in subs)
+                {
+                    s.Value.Unsubscribe();
+                }
+                subs.Clear();
+                _server.Disconnect();
+            }
+            _server.Dispose();
+        }
+
+        public void Dispose()
+        {
+            Disconnect();
         }
 
         private bool isClosed()
@@ -56,8 +77,6 @@ namespace OpcCollector.Collector
             var s = new DaSubscriber(this);
             s.Subscribe(state);
 
-            //AddSubscriber(s);
-
             return s;
         }
 
@@ -74,6 +93,67 @@ namespace OpcCollector.Collector
         public OpcItemResult[] Write(TsCDaItemValue[] items)
         {
             return _server.Write(items);
+        }
+
+        public List<TsCDaBrowseElement> BrowseDeep(OpcItem itemId, TsCDaBrowseFilters filters, int level = 0)
+        {
+            var results = new List<TsCDaBrowseElement>();
+
+            TsCDaBrowsePosition position = null;
+            TsCDaBrowseElement[] elements = _server.Browse(itemId, filters, out position);
+
+            if (elements != null)
+            {
+                foreach (var el in elements)
+                {
+                    if (el.HasChildren)
+                    {
+                        // nested fetch all child
+                        var childItemId = new OpcItem(el.ItemPath, el.ItemName);
+                        var childs = BrowseDeep(childItemId, filters, level - 1);
+                        results.AddRange(childs);
+                    }
+                    else
+                    {
+                        results.Add(el);
+                    }
+                }
+            }
+
+            // loop until all elements have been fetched.
+            while (position != null)
+            {
+                // fetch next batch of elements,.
+                elements = _server.BrowseNext(ref position);
+
+                // add children.
+                if (elements != null)
+                {
+                    foreach (var el in elements)
+                    {
+                        if (el.HasChildren)
+                        {
+                            // nested fetch all child
+                            var childItemId = new OpcItem(el.ItemPath, el.ItemName);
+                            var childs = BrowseDeep(childItemId, filters, level - 1);
+                            results.AddRange(childs);
+                        }
+                        else
+                        {
+                            results.Add(el);
+                        }
+                    }
+                }
+            }
+
+            return results;
+        }
+
+        public List<TsCDaBrowseElement> ListTag(TsCDaBrowseFilters filters)
+        {
+            var elements = BrowseDeep(null, filters);
+
+            return elements;
         }
     }
 }
