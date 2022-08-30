@@ -31,6 +31,7 @@
 
 using OpcCollector.Collector;
 using OpcCollector.Common;
+using OpcCollector.Processor;
 using System;
 using System.Globalization;
 using System.Linq;
@@ -48,6 +49,7 @@ namespace OpcCollector
     /// </summary>
     class OpcSample
     {
+
         public void Run()
         {
             try
@@ -59,103 +61,37 @@ namespace OpcCollector
                 // Connect to the server
                 connection.Connect(serverUrl);
 
-                var myDaServer = connection._server;
-
                 // Get the status from the server
                 OpcServerStatus status = connection.Status();
                 Console.WriteLine($"Server Connected. Status of Server is {status.ServerState}");
                 Console.WriteLine();
 
-                var listTags = connection.ListTag(new TsCDaBrowseFilters());
-                foreach (var tag in listTags)
-                {
-                    Console.WriteLine($"Name: {tag.Name}, ItemName: {tag.ItemName}, ItemPath: {tag.ItemPath}");
-                }
+                //var listTags = connection.ListTag(new TsCDaBrowseFilters());
+                //foreach (var tag in listTags)
+                //{
+                //    Console.WriteLine($"Name: {tag.Name}, ItemName: {tag.ItemName}, ItemPath: {tag.ItemPath}");
+                //}
 
                 Console.WriteLine();
                 Console.WriteLine("---------------");
                 Console.WriteLine();
 
-                // Add a group with default values Active = true and UpdateRate = 500ms
-                TsCDaSubscriptionState groupState = new TsCDaSubscriptionState { Name = "MyGroup", UpdateRate = 1000 };
-                var subscriber = (DaSubscriber)connection.Subscribe(groupState);
+                var collector = new DaCollector(connection);
 
-                // Add Items
-                TsCDaItem[] items = new TsCDaItem[ConfigMgr.Instance.YmlConfig.Devices[0].Tags.Length];
+                // register all processor
+                collector.Register(new ConsoleProcessor());
 
-                foreach (var (tag, i) in ConfigMgr.Instance.YmlConfig.Devices[0].Tags.Select((tag, index) => (tag, index)))
-                {
-                    items[i] = new TsCDaItem
-                    {
-                        ItemName = tag.Name,
-                    };
-                }
+                // init
+                collector.Init();
 
-                subscriber.AddItems(items);
+                // run collector
+                collector.Run();
 
-                subscriber.OnData((e) =>
-                {
-                    var requestHandle = e.requestHandle;
-                    var subscriptionHandle = e.subscriptionHandle;
-                    var values = e.values;
-
-                    Console.WriteLine($"subscriptionHandle: {subscriptionHandle}, values length: {values.Length}");
-
-                    if (requestHandle != null)
-                    {
-                        Console.Write("DataChange() for requestHandle :"); Console.WriteLine(requestHandle.GetHashCode().ToString());
-                    }
-                    else
-                    {
-                        Console.WriteLine("DataChange():");
-                    }
-                    for (int i = 0; i < values.GetLength(0); i++)
-                    {
-                        Console.Write("Client Handle : "); Console.WriteLine(values[i].ClientHandle);
-                        if (values[i].Result.IsSuccess())
-                        {
-                            Console.WriteLine($"Type: {values[i].Value.GetType()}");
-
-                            if (values[i].Value.GetType().IsArray)
-                            {
-                                UInt16[] arrValue = (UInt16[])values[i].Value;
-                                for (int j = 0; j < arrValue.GetLength(0); j++)
-                                {
-                                    Console.Write($"Value[{j}]      : "); Console.WriteLine(arrValue[j]);
-                                }
-                            }
-                            else
-                            {
-                                TsCDaItemValueResult valueResult = values[i];
-                                TsCDaQuality quality = new TsCDaQuality(193);
-                                valueResult.Quality = quality;
-                                string message =
-                                    $"\r\n\tQuality: is not good : {valueResult.Quality} Code:{valueResult.Quality.GetCode()} LimitBits: {valueResult.Quality.LimitBits} QualityBits: {valueResult.Quality.QualityBits} VendorBits: {valueResult.Quality.VendorBits}";
-                                if (valueResult.Quality.QualityBits != TsDaQualityBits.Good && valueResult.Quality.QualityBits != TsDaQualityBits.GoodLocalOverride)
-                                {
-                                    Console.WriteLine(message);
-                                }
-
-                                Console.Write("Value         : "); Console.WriteLine(values[i].Value);
-                            }
-                            //Console.Write("Time Stamp    : "); Console.WriteLine(values[i].Timestamp.ToString(CultureInfo.InvariantCulture));
-                            //Console.Write("Quality       : "); Console.WriteLine(values[i].Quality);
-                        }
-                        //Console.Write("Result        : "); Console.WriteLine(values[i].Result.Description());
-                    }
-                    Console.WriteLine();
-                    Console.WriteLine();
-                });
-
-                subscriber.Pause();
-
-                Console.WriteLine("   Press any key to resume.");
-                Console.ReadLine();
-                subscriber.Resume();
-
-                Console.WriteLine("   Press any key to disconnect.");
+                Console.WriteLine("   Press any key to stop collector and disconnect.");
                 Console.ReadLine();
 
+                collector.Stop();
+                collector.Dispose();
                 connection.Disconnect();
                 //myDaServer.Disconnect();
                 connection.Dispose();

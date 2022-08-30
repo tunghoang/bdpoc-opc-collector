@@ -14,6 +14,8 @@ namespace OpcCollector.Collector
 
         private Dictionary<string, DaSubscriber> subs = new Dictionary<string, DaSubscriber>();
 
+        public bool IsConnected => _server.IsConnected;
+
         public DaConnection()
         {
         }
@@ -42,14 +44,14 @@ namespace OpcCollector.Collector
             Disconnect();
         }
 
-        private bool isClosed()
+        public bool IsClosed()
         {
             return !_server.IsConnected;
         }
 
         public OpcServerStatus Status()
         {
-            if (isClosed())
+            if (IsClosed())
             {
                 throw new DaConnectionClosedException();
             }
@@ -69,7 +71,7 @@ namespace OpcCollector.Collector
 
         public DaSubscriber Subscribe(TsCDaSubscriptionState state)
         {
-            if (isClosed())
+            if (IsClosed())
             {
                 throw new DaConnectionClosedException();
             }
@@ -80,9 +82,9 @@ namespace OpcCollector.Collector
             return s;
         }
 
-        public void Subscribe()
+        public DaSubscriber Subscribe()
         {
-            Subscribe(new TsCDaSubscriptionState { });
+            return Subscribe(new TsCDaSubscriptionState { });
         }
 
         public TsCDaItemValueResult[] Read(TsCDaItem[] items)

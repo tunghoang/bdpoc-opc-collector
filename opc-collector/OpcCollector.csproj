@@ -46,9 +46,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Collector\DaCollector.cs" />
     <Compile Include="Collector\ConnectionOption.cs" />
     <Compile Include="Collector\DaConnection.cs" />
     <Compile Include="Collector\Exception.cs" />
+    <Compile Include="Processor\ConsoleProcessor.cs" />
+    <Compile Include="Processor\IProcessor.cs" />
     <Compile Include="Collector\ISubscriber.cs" />
     <Compile Include="Collector\DaSubscriber.cs" />
     <Compile Include="Collector\SubscriberEvent.cs" />
