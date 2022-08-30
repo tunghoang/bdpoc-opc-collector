@@ -1,0 +1,34 @@
+﻿devices:
+  - name: device_1
+    tags:
+      - name: Random.Real8
+        checks:
+          - type: NaNCheck
+          - type: OverRangeCheck
+            params:
+              - low: 0
+                high: 100
+      - name: Random.UInt8
+        checks:
+          - type: NaNCheck
+      - name: Random.Time
+        checks:
+          - type: NaNCheck
+      - name: Random.String
+        checks:
+          - type: NaNCheck
+      - name: Unknown.UInt8
+        checks:
+          - type: NaNCheck
+  - name: device_2
+    tags:
+      - name: tag2.1
+        checks:
+          - type: NaNCheck
+          - type: OverRangeCheck
+            params:
+              - low: 0
+                high: 100
+      - name: tag2.2
+        checks:
+          - type: NaNCheck

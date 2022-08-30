@@ -1,0 +1,239 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{C1C13182-C6AE-40E5-A297-201D681B41D7}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Technosoftware.DaAeHdaClient</RootNamespace>
+    <AssemblyName>Technosoftware.DaAeHdaClient</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Ae\Attribute.cs" />
+    <Compile Include="Ae\AttributeCollection.cs" />
+    <Compile Include="Ae\AttributeDictionary.cs" />
+    <Compile Include="Ae\AttributeValue.cs" />
+    <Compile Include="Ae\BrowseElement.cs" />
+    <Compile Include="Ae\BrowsePosition.cs" />
+    <Compile Include="Ae\BrowseType.cs" />
+    <Compile Include="Ae\Category.cs" />
+    <Compile Include="Ae\ChangeMask.cs" />
+    <Compile Include="Ae\Condition.cs" />
+    <Compile Include="Ae\ConditionState.cs" />
+    <Compile Include="Ae\EnabledStateResult.cs" />
+    <Compile Include="Ae\EventAcknowledgement.cs" />
+    <Compile Include="Ae\EventNotification.cs" />
+    <Compile Include="Ae\EventType.cs" />
+    <Compile Include="Ae\FilterType.cs" />
+    <Compile Include="Ae\IServer.cs" />
+    <Compile Include="Ae\ISubscription.cs" />
+    <Compile Include="Ae\ItemUrl.cs" />
+    <Compile Include="Ae\ItemUrlCollection.cs" />
+    <Compile Include="Ae\Server.cs" />
+    <Compile Include="Ae\ServerState.cs" />
+    <Compile Include="Ae\StateMask.cs" />
+    <Compile Include="Ae\SubCondition.cs" />
+    <Compile Include="Ae\Subscription.cs" />
+    <Compile Include="Ae\SubscriptionFilters.cs" />
+    <Compile Include="Ae\SubscriptionState.cs" />
+    <Compile Include="ApplicationInstance.cs" />
+    <Compile Include="Com\Ae\Interop.cs" />
+    <Compile Include="Com\Ae\Result.cs" />
+    <Compile Include="Com\Ae\Server.cs" />
+    <Compile Include="Com\Ae\Subscription.cs" />
+    <Compile Include="Com\ComUtils.cs" />
+    <Compile Include="Com\ConnectionPoint.cs" />
+    <Compile Include="Com\Da20\Server.cs" />
+    <Compile Include="Com\Da20\Subscription.cs" />
+    <Compile Include="Com\Da\BrowsePosition.cs" />
+    <Compile Include="Com\Da\Interop.cs" />
+    <Compile Include="Com\Da\Result.cs" />
+    <Compile Include="Com\Da\Server.cs" />
+    <Compile Include="Com\Da\Subscription.cs" />
+    <Compile Include="Com\EnumString.cs" />
+    <Compile Include="Com\Factory.cs" />
+    <Compile Include="Com\FILETIME.cs" />
+    <Compile Include="Com\Hda\Browser.cs" />
+    <Compile Include="Com\Hda\DataCallback.cs" />
+    <Compile Include="Com\Hda\Interop.cs" />
+    <Compile Include="Com\Hda\Request.cs" />
+    <Compile Include="Com\Hda\Result.cs" />
+    <Compile Include="Com\Hda\Server.cs" />
+    <Compile Include="Com\Interop.cs" />
+    <Compile Include="Com\Rcw\AlarmsAndEvents.cs" />
+    <Compile Include="Com\Rcw\Common.cs" />
+    <Compile Include="Com\Rcw\DataAccess.cs" />
+    <Compile Include="Com\Rcw\HistoricalDataAccess.cs" />
+    <Compile Include="Com\Rcw\Security.cs" />
+    <Compile Include="Com\SafeNativeMethods.cs" />
+    <Compile Include="Com\Server.cs" />
+    <Compile Include="Com\ServerEnumerator.cs" />
+    <Compile Include="Cpx\BinaryReader.cs" />
+    <Compile Include="Cpx\BinaryStream.cs" />
+    <Compile Include="Cpx\BinaryWriter.cs" />
+    <Compile Include="Cpx\ComplexItem.cs" />
+    <Compile Include="Cpx\ComplexTypeCache.cs" />
+    <Compile Include="Cpx\ComplexValue.cs" />
+    <Compile Include="Cpx\Context.cs" />
+    <Compile Include="Cpx\InvalidDataInBufferException.cs" />
+    <Compile Include="Cpx\InvalidDataToWriteException.cs" />
+    <Compile Include="Cpx\InvalidSchemaException.cs" />
+    <Compile Include="Cpx\OPCBinary.cs">
+      <DependentUpon>OPCBinary.xsd</DependentUpon>
+    </Compile>
+    <Compile Include="Da\AccessRight.cs" />
+    <Compile Include="Da\Browse.cs" />
+    <Compile Include="Da\BrowseElement.cs" />
+    <Compile Include="Da\BrowseFilter.cs" />
+    <Compile Include="Da\BrowseFilters.cs" />
+    <Compile Include="Da\EuType.cs" />
+    <Compile Include="Da\IServer.cs" />
+    <Compile Include="Da\ISubscription.cs" />
+    <Compile Include="Da\Item.cs" />
+    <Compile Include="Da\ItemCollection.cs" />
+    <Compile Include="Da\ItemProperty.cs" />
+    <Compile Include="Da\ItemPropertyCollection.cs" />
+    <Compile Include="Da\ItemResult.cs" />
+    <Compile Include="Da\ItemValue.cs" />
+    <Compile Include="Da\ItemValueResult.cs" />
+    <Compile Include="Da\LimitBits.cs" />
+    <Compile Include="Da\Property.cs" />
+    <Compile Include="Da\PropertyDescription.cs" />
+    <Compile Include="Da\PropertyID.cs" />
+    <Compile Include="Da\Quality.cs" />
+    <Compile Include="Da\QualityBits.cs" />
+    <Compile Include="Da\QualityMasks.cs" />
+    <Compile Include="Da\Request.cs" />
+    <Compile Include="Da\ResultFilter.cs" />
+    <Compile Include="Da\Server.cs" />
+    <Compile Include="Da\ServerState.cs" />
+    <Compile Include="Da\StateMask.cs" />
+    <Compile Include="Da\Subscription.cs" />
+    <Compile Include="Da\SubscriptionCollection.cs" />
+    <Compile Include="Da\SubscriptionState.cs" />
+    <Compile Include="Hda\Aggregate.cs" />
+    <Compile Include="Hda\AggregateCollection.cs" />
+    <Compile Include="Hda\AggregateId.cs" />
+    <Compile Include="Hda\AnnotationValue.cs" />
+    <Compile Include="Hda\AnnotationValueCollection.cs" />
+    <Compile Include="Hda\Attribute.cs" />
+    <Compile Include="Hda\AttributeCollection.cs" />
+    <Compile Include="Hda\AttributeID.cs" />
+    <Compile Include="Hda\AttributeValue.cs" />
+    <Compile Include="Hda\AttributeValueCollection.cs" />
+    <Compile Include="Hda\BrowseElement.cs" />
+    <Compile Include="Hda\BrowseFilter.cs" />
+    <Compile Include="Hda\BrowseFilterCollection.cs" />
+    <Compile Include="Hda\BrowsePosition.cs" />
+    <Compile Include="Hda\EditType.cs" />
+    <Compile Include="Hda\IActualTime.cs" />
+    <Compile Include="Hda\IBrowser.cs" />
+    <Compile Include="Hda\IServer.cs" />
+    <Compile Include="Hda\Item.cs" />
+    <Compile Include="Hda\ItemAttributeCollection.cs" />
+    <Compile Include="Hda\ItemCollection.cs" />
+    <Compile Include="Hda\ItemResult.cs" />
+    <Compile Include="Hda\ItemTimeCollection.cs" />
+    <Compile Include="Hda\ItemValue.cs" />
+    <Compile Include="Hda\ItemValueCollection.cs" />
+    <Compile Include="Hda\ItemValueResult.cs" />
+    <Compile Include="Hda\ModifiedValue.cs" />
+    <Compile Include="Hda\ModifiedValueCollection.cs" />
+    <Compile Include="Hda\Operator.cs" />
+    <Compile Include="Hda\Quality.cs" />
+    <Compile Include="Hda\RelativeTime.cs" />
+    <Compile Include="Hda\ResultCollection.cs" />
+    <Compile Include="Hda\Server.cs" />
+    <Compile Include="Hda\ServerState.cs" />
+    <Compile Include="Hda\Time.cs" />
+    <Compile Include="Hda\TimeOffset.cs" />
+    <Compile Include="Hda\TimeOffsetCollection.cs" />
+    <Compile Include="Hda\Trend.cs" />
+    <Compile Include="Hda\TrendCollection.cs" />
+    <Compile Include="Interfaces\IOpcBrowsePosition.cs" />
+    <Compile Include="Interfaces\IOpcDiscovery.cs" />
+    <Compile Include="Interfaces\IOpcFactory.cs" />
+    <Compile Include="Interfaces\IOpcRequest.cs" />
+    <Compile Include="Interfaces\IOpcResult.cs" />
+    <Compile Include="Interfaces\IOpcServer.cs" />
+    <Compile Include="LicenseHandler.cs" />
+    <Compile Include="obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
+    <Compile Include="OpcConnectData.cs" />
+    <Compile Include="OpcConvert.cs" />
+    <Compile Include="OpcDiscovery.cs" />
+    <Compile Include="OpcFactory.cs" />
+    <Compile Include="OpcItem.cs" />
+    <Compile Include="OpcItemCollection.cs" />
+    <Compile Include="OpcItemResult.cs" />
+    <Compile Include="OpcItemResultCollection.cs" />
+    <Compile Include="OpcNamespace.cs" />
+    <Compile Include="OpcReadOnlyCollection.cs" />
+    <Compile Include="OpcReadOnlyDictionary.cs" />
+    <Compile Include="OpcResult.cs" />
+    <Compile Include="OpcResultException.cs" />
+    <Compile Include="OpcServer.cs" />
+    <Compile Include="OpcServerDescription.cs" />
+    <Compile Include="OpcServerDetail.cs" />
+    <Compile Include="OpcServerState.cs" />
+    <Compile Include="OpcServerStatus.cs" />
+    <Compile Include="OpcSpecification.cs" />
+    <Compile Include="OpcType.cs" />
+    <Compile Include="OpcUrl.cs" />
+    <Compile Include="OpcUrlScheme.cs" />
+    <Compile Include="OpcUserIdentity.cs" />
+    <Compile Include="OpcWriteableCollection.cs" />
+    <Compile Include="OpcWriteableDictionary.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utilities\DCOMCallWatchdog.cs" />
+    <Compile Include="Utilities\HiResClock.cs" />
+    <Compile Include="Utilities\Interop.cs" />
+    <Compile Include="Utilities\Utils.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Cpx\OPCBinary.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Da\ISubscription.cd" />
+    <None Include="Da\Server.cd" />
+    <None Include="Da\Subscription.cd" />
+    <None Include="obj\Debug\DesignTimeResolveAssemblyReferencesInput.cache" />
+    <None Include="obj\Debug\Technosoftware.DaAeHdaClient.csproj.AssemblyReference.cache" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="bin\Debug\" />
+    <Folder Include="obj\Debug\TempPE\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
