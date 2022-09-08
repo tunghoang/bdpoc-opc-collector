@@ -12,6 +12,8 @@ namespace OpcCollector.Collector
 
     public class DaSubscriber : ISubscriber, IDisposable
     {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
         internal readonly object _mu = new object(); // lock
 
         internal DaConnection _conn = null;
@@ -20,6 +22,7 @@ namespace OpcCollector.Collector
         internal OnDataHandler _onDataHandler;
 
         public string sid = Guid.NewGuid().ToString();
+        public object Metadata { get; set; }
 
         public TsCDaSubscription Group
         {
@@ -53,11 +56,12 @@ namespace OpcCollector.Collector
         }
         private void onDataChangeEvent(object subscriptionHandle, object requestHandle, TsCDaItemValueResult[] values)
         {
-            var args = new OnData { subscriptionHandle = subscriptionHandle, requestHandle = requestHandle, values = values };
+            Logger.Debug("On data change. subscription={0} requestHandle={1}", subscriptionHandle, requestHandle);
+
+            var args = new OnDataArgs { subscriber = this, metadata = Metadata, subscriptionHandle = subscriptionHandle, requestHandle = requestHandle, values = values };
 
             _onDataHandler?.Invoke(args);
 
-            System.Console.WriteLine($"On data change event ---->");
         }
 
         public void Subscribe(TsCDaSubscriptionState state)
@@ -105,7 +109,7 @@ namespace OpcCollector.Collector
         public void Pause()
         {
             // Set subscription inactive
-            if(!_subscription.State.Active)
+            if (!_subscription.State.Active)
             {
                 return;
             }
@@ -130,19 +134,13 @@ namespace OpcCollector.Collector
 
         public TsCDaItemResult[] AddItems(TsCDaItem[] items)
         {
-            var results = new bool[items.Length];
 
             var itemResults = _subscription.AddItems(items);
-            for (int i = 0; i < itemResults.GetLength(0); i++)
+            foreach (var item in itemResults)
             {
-                if (itemResults[i].Result.IsError())
+                if (item.Result.IsError())
                 {
-                    Console.WriteLine($"   Item {itemResults[i].ItemName} could not be added to the group.");
-                    results[i] = false;
-                }
-                else
-                {
-                    results[i] = true;
+                    Logger.Warn("Item `{0}` could not be add to group: {1}. code={2}", item.ItemName, item.Result.Description(), item.Result.Code);
                 }
             }
 
@@ -151,19 +149,12 @@ namespace OpcCollector.Collector
 
         public OpcItemResult[] RemoveItems(TsCDaItem[] items)
         {
-            var results = new bool[items.Length];
-
             var itemResults = _subscription.RemoveItems(items);
-            for (int i = 0; i < itemResults.GetLength(0); i++)
+            foreach (var item in itemResults)
             {
-                if (itemResults[i].Result.IsError())
+                if (item.Result.IsError())
                 {
-                    Console.WriteLine($"   Item {itemResults[i].ItemName} could not be removed from group.");
-                    results[i] = false;
-                }
-                else
-                {
-                    results[i] = true;
+                    Logger.Warn("Item `{0}` could not be remove from group {1}. code={2}", item.ItemName, item.Result.Description(), item.Result.Failed());
                 }
             }
 

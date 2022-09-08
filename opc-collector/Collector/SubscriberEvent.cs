@@ -7,8 +7,14 @@ using Technosoftware.DaAeHdaClient.Da;
 
 namespace OpcCollector.Collector.SubscriberEvent
 {
-    public class OnData : EventArgs
+    public class OnEventArgs : EventArgs
     {
+        public ISubscriber subscriber;
+    }
+
+    public class OnDataArgs : OnEventArgs
+    {
+        public object metadata;
         public object subscriptionHandle;
         public object requestHandle;
         public TsCDaItemValueResult[] values;

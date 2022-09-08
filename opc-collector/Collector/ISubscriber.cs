@@ -8,7 +8,7 @@ using Technosoftware.DaAeHdaClient.Da;
 
 namespace OpcCollector.Collector
 {
-    public delegate void OnDataHandler(OnData args);
+    public delegate void OnDataHandler(OnDataArgs args);
 
     public interface ISubscriber
     {

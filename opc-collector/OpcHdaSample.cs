@@ -2,13 +2,13 @@
 
 using OpcCollector.Collector;
 using OpcCollector.Common;
-using OpcCollector.Processor.Console0;
-using OpcCollector.Processor.InfluxDB;
+using OpcCollector.Processor;
 using System;
 using System.Globalization;
 using System.Linq;
 using Technosoftware.DaAeHdaClient;
 using Technosoftware.DaAeHdaClient.Da;
+using Technosoftware.DaAeHdaClient.Hda;
 using YamlDotNet.Core.Tokens;
 
 #endregion
@@ -19,7 +19,7 @@ namespace OpcCollector
     /// <summary>
     /// Simple OPC DA Client Application
     /// </summary>
-    class OpcSample
+    class OpcHdaSample
     {
 
         public void Run()
@@ -28,9 +28,9 @@ namespace OpcCollector
             {
                 // const string serverUrl = "opcda://192.168.1.101/OPC.PHDServerDA.1";
                 string serverUrl = "";
-                ConfigMgr.Collector().TryGetValue("DA_SERVER_URL", out serverUrl);
+                ConfigMgr.Collector().TryGetValue("HDA_SERVER_URL", out serverUrl);
 
-                DaConnection connection = new DaConnection();
+                HdaConnection connection = new HdaConnection();
 
                 // Connect to the server
                 connection.Connect(serverUrl);
@@ -50,30 +50,28 @@ namespace OpcCollector
                 Console.WriteLine("---------------");
                 Console.WriteLine();
 
-                var collector = new DaCollector(connection, ConfigMgr.DataInfo());
+                var results = connection.ReadRaw(
+                    new[] { new OpcItem("Simulation Items/Random/Int4") },
+                    new DateTime(2022, 09, 06, 10, 00, 00),
+                    new DateTime(2022, 09, 06, 11, 00, 00)
+                 );
 
-                // register all processor
-                collector.Register(new InfluxDBProcessor(new InfluxDBProcessorOptions
+                foreach (var item in results)
                 {
-                    Url = ConfigMgr.Collector()["INFLUXDB_URL"],
-                    Token = ConfigMgr.Collector()["INFLUXDB_TOKEN"],
-                    Bucket = ConfigMgr.Collector()["INFLUXDB_BUCKET"],
-                    Org = ConfigMgr.Collector()["INFLUXDB_ORG"],
-                }));
-                //collector.Register(new ConsoleProcessor());
+                    Console.WriteLine($"{item.ItemName}");
 
-                // run collector
-                collector.RunAsync();
+                    foreach (TsCHdaItemValue val in item)
+                    {
+                        if ((val.Quality.GetCode() & (int)TsDaQualityMasks.QualityMask) != (int)TsDaQualityBits.Good)
+                            Console.WriteLine($"      {val.Timestamp}, {val.Quality}");
+                        else
+                            Console.WriteLine($"      {val.Timestamp}, {val.Value}");
+                    }
+                }
 
-                Console.WriteLine("   Press any key to stop collector and disconnect.");
-                Console.ReadLine();
-
-                collector.Stop();
-                collector.Dispose();
                 connection.Disconnect();
                 //myDaServer.Disconnect();
                 connection.Dispose();
-                Console.ReadLine();
                 Console.WriteLine("   Disconnected from the server.");
                 Console.WriteLine();
 

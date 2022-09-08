@@ -9,12 +9,33 @@ namespace OpcCollector
 {
     internal class Program
     {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
         static void Main(string[] args)
         {
-            ConfigMgr.Init(@"config.yaml");
+            try
+            {
+                ConfigMgr.Init();
 
-            var myOpcSample = new OpcSample();
-            myOpcSample.Run();
+                //var myOpcSample = new OpcSample();
+                //myOpcSample.Run();
+
+                //var myOpcHdaSample = new OpcHdaSample();
+                //myOpcHdaSample.Run();
+
+                var collectord = new Collectord();
+                collectord.Run();
+
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e, "Main app error");
+            }
+            finally
+            {
+                NLog.LogManager.Shutdown(); // Flush and close down internal threads and timers
+            }
+
         }
     }
 }

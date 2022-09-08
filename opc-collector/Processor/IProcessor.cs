@@ -9,6 +9,6 @@ namespace OpcCollector.Processor
 {
     public interface IProcessor
     {
-        void Apply(OnData args);
+        void Apply(OnDataArgs args);
     }
 }

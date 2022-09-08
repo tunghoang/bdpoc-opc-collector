@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Technosoftware.DaAeHdaClient;
@@ -8,8 +9,10 @@ using Technosoftware.DaAeHdaClient.Da;
 
 namespace OpcCollector.Collector
 {
-    public class DaConnection : IDisposable
+    public class DaConnection : IDisposable, IConnetion
     {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
         internal TsCDaServer _server = new TsCDaServer();
 
         private Dictionary<string, DaSubscriber> subs = new Dictionary<string, DaSubscriber>();
@@ -23,6 +26,7 @@ namespace OpcCollector.Collector
         public void Connect(string url)
         {
             _server.Connect(url);
+            Logger.Info("Connected to {0}", url);
         }
 
         public void Disconnect()
@@ -34,7 +38,9 @@ namespace OpcCollector.Collector
                     s.Value.Unsubscribe();
                 }
                 subs.Clear();
+                Logger.Info("Disconnecting from {0}", _server.Url);
                 _server.Disconnect();
+                Logger.Info("Disconnected");
             }
             _server.Dispose();
         }

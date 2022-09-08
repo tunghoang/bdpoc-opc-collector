@@ -10,26 +10,30 @@ using Technosoftware.DaAeHdaClient.Da;
 
 namespace OpcCollector.Collector
 {
+
     public class DaCollector : IDisposable
     {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
         public DaConnection Conn { get; }
+        private DataInfoConfig _dataInfoConf;
+        private DaCollectorOptions _opts;
+
         internal List<IProcessor> processors = new List<IProcessor>();
-        private  bool _isRunning = false;
+        private bool _isRunning = false;
         private Dictionary<string, DaSubscriber> subs = new Dictionary<string, DaSubscriber>();
 
         public bool IsRunning => _isRunning;
 
-        public DaCollector(DaConnection connection)
+        public DaCollector(DaConnection connection, DataInfoConfig dataInfoConf, DaCollectorOptions opts)
         {
             Conn = connection;
+            _dataInfoConf = dataInfoConf;
+            _opts = opts;
         }
-        private void onDataHandler(OnData args)
-        {
-            foreach(var processor in processors)
-            {
-                processor.Apply(args);
-            }
-        }
+
+        public DaCollector(DaConnection conn, DataInfoConfig dataInfoConf) : this(conn, dataInfoConf, new DaCollectorOptions { ItemPerSub = 50, SampleRate = 1000 }) { }
+
 
         public void Register(IProcessor processor)
         {
@@ -41,66 +45,41 @@ namespace OpcCollector.Collector
             processors.Remove(processor);
         }
 
-        private DaSubscriber newSubscriber()
+        private void init()
         {
-            var sub = Conn.Subscribe(new TsCDaSubscriptionState { /*Name = $"OpcDaCollector#{GetHashCode()}", */Active = false, UpdateRate = 1000 });
-
-            sub.OnData(this.onDataHandler);
-
-            subs.Add(sub.sid, sub);
-
-            return sub;
-        }
-
-        private void watchItems(List<TsCDaItem> items)
-        {
-            var sub = newSubscriber();
-            sub.AddItems(items.ToArray());    
-            Console.WriteLine("add chunk...");
-        }
-
-        public void Init()
-        {
-            if(Conn.IsClosed())
-            {
-                throw new DaConnectionClosedException();
-            }
-
-            var tags = new List<TagConfig>();
-
-            foreach (var device in ConfigMgr.Instance.YmlConfig.Devices)
-            {
-                tags.AddRange(device.Tags);
-            }
-
-            var chunkItems = new List<TsCDaItem>(2);
-
-            foreach (var tag in tags)
-            {
-                chunkItems.Add(new TsCDaItem { ItemName = tag.Name });
-
-                if (chunkItems.Count == chunkItems.Capacity)
-                {
-                    watchItems(chunkItems);
-                    chunkItems.Clear();
-                }
-            }
-
-            if (chunkItems.Count > 0)
-            {
-                watchItems(chunkItems);
-                //chunkItems.Clear();
-            }
-        }
-
-        public void Run()
-        {
-            if(_isRunning)
+            if (subs.Count > 0)
             {
                 return;
             }
 
-            foreach(var subKV in subs)
+            if (Conn.IsClosed())
+            {
+                throw new DaConnectionClosedException();
+            }
+
+            clean();
+
+            Logger.Info("Init: Devices={0}", _dataInfoConf.Devices.Length);
+
+            foreach (var devConf in _dataInfoConf.Devices)
+            {
+                initDevice(devConf);
+            }
+
+        }
+
+        public void RunAsync()
+        {
+            if (_isRunning)
+            {
+                return;
+            }
+
+            init();
+
+            Logger.Info("Starting");
+
+            foreach (var subKV in subs)
             {
                 subKV.Value.Resume();
             }
@@ -121,15 +100,83 @@ namespace OpcCollector.Collector
             }
 
             _isRunning = false;
+
+            Logger.Info("Stopped");
         }
 
-        public void Dispose()
+        private void clean()
         {
-            foreach(var subKV in subs)
+            foreach (var subKV in subs)
             {
                 //subKV.Value.Unsubscribe();
                 subKV.Value.Dispose();
             }
         }
+
+        public void Dispose()
+        {
+            clean();
+        }
+
+        private void onDataHandler(OnDataArgs args)
+        {
+            foreach (var processor in processors)
+            {
+                try
+                {
+                    processor.Apply(args);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e, "Cannot call Apply of {0}", processor.GetType());
+                }
+
+            }
+        }
+
+        private void initDevice(DeviceConfig devConf)
+        {
+            var tags = devConf.Tags;
+            var items = new List<TsCDaItem>();
+
+            foreach (var tag in tags)
+            {
+                items.Add(new TsCDaItem { ItemName = tag.TagNumber });
+            }
+
+            var part = new List<TsCDaItem>(_opts.ItemPerSub);
+
+            foreach (var (item, i) in items.Select((v, i) => (v, i)))
+            {
+                part.Add(item);
+                if (part.Count == part.Capacity || i == (items.Count - 1))
+                {
+                    var sub = newSubscriber($"{devConf.Name}::{i}::{Guid.NewGuid()}");
+                    sub.Metadata = devConf;
+                    sub.AddItems(part.ToArray());
+                    part.Clear();
+                }
+
+            }
+        }
+
+        private DaSubscriber newSubscriber(string subName)
+        {
+            var sub = Conn.Subscribe(new TsCDaSubscriptionState { Name = subName, Active = false, UpdateRate = _opts.SampleRate });
+
+            sub.OnData(this.onDataHandler);
+
+            subs.Add(sub.sid, sub);
+
+            return sub;
+        }
+
     }
+
+    public class DaCollectorOptions
+    {
+        public int ItemPerSub;
+        public int SampleRate;
+    }
+
 }
