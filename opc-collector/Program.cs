@@ -15,7 +15,10 @@ namespace OpcCollector
         {
             try
             {
+                Logger.Info("App starting...");
+
                 ConfigMgr.Init();
+                Logger.Info("ConfigMgr loaded.");
 
                 //var myOpcSample = new OpcSample();
                 //myOpcSample.Run();

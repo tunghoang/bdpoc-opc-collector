@@ -25,6 +25,7 @@ namespace OpcCollector.Collector
 
         public void Connect(string url)
         {
+            Logger.Info("Connecting to {0}", url);
             _server.Connect(url);
             Logger.Info("Connected to {0}", url);
         }

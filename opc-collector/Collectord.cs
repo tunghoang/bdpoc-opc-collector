@@ -16,11 +16,33 @@ namespace OpcCollector
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
+        private bool _terminated = false;
+
+        private void setupGracefulShutdown()
+        {
+            Console.CancelKeyPress += (_, ea) =>
+            {
+                // Tell .NET to not terminate the process
+                ea.Cancel = true;
+
+                Console.WriteLine("Received SIGINT (Ctrl+C)");
+                _terminated = true;
+            };
+
+            AppDomain.CurrentDomain.ProcessExit += (_, ea) =>
+            {
+                Console.WriteLine("Received SIGTERM");
+                _terminated = true;
+            };
+        }
+
         public void Run()
         {
+            setupGracefulShutdown();
+
             _run();
 
-            //while (true)
+            //while (!_terminated)
             //{
             //    _run();
 
@@ -64,7 +86,7 @@ namespace OpcCollector
                 while (true)
                 {
                     Thread.Sleep(2000);
-                    if (connection.IsClosed())
+                    if (connection.IsClosed() || _terminated)
                     {
                         break;
                     }
