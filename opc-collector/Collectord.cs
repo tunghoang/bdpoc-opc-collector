@@ -3,9 +3,11 @@ using OpcCollector.Common;
 using OpcCollector.Processor.InfluxDB;
 using System;
 using System.Collections.ObjectModel;
+using System.Data.Common;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Technosoftware.DaAeHdaClient;
 
 
@@ -40,7 +42,7 @@ namespace OpcCollector
         {
             setupGracefulShutdown();
 
-            _run();
+            Task.WaitAll(_run());
 
             //while (!_terminated)
             //{
@@ -49,7 +51,7 @@ namespace OpcCollector
             //}
         }
 
-        private void _run()
+        private async Task _run()
         {
 
             DaConnection connection = null;
@@ -68,7 +70,7 @@ namespace OpcCollector
                 Logger.Info("Server connected. Status of Server is {0}", status.ServerState);
 
                 // DaCollector
-                collector = new DaCollector(connection, ConfigMgr.DataInfo());
+                collector = new DaCollector(connection, ConfigMgr.DataInfo(), DaCollectorOptions.ParseCollectorCfg(ConfigMgr.Collector()));
 
                 // register all processor
                 collector.Register(new InfluxDBProcessor(new InfluxDBProcessorOptions
@@ -76,21 +78,24 @@ namespace OpcCollector
                     Url = ConfigMgr.Collector()["INFLUXDB_URL"],
                     Token = ConfigMgr.Collector()["INFLUXDB_TOKEN"],
                     Bucket = ConfigMgr.Collector()["INFLUXDB_BUCKET"],
+                    MonitorBucket = ConfigMgr.Collector()["INFLUXDB_MONITOR_BUCKET"],
                     Org = ConfigMgr.Collector()["INFLUXDB_ORG"],
                 }));
 
                 // run collector
-                collector.RunAsync();
-
-                // check for closed
-                while (true)
-                {
-                    Thread.Sleep(2000);
-                    if (connection.IsClosed() || _terminated)
-                    {
-                        break;
-                    }
-                }
+                await Task.WhenAny(new[] {
+                    Task.Run(async () => {
+                        await collector.RunAsync();
+                        _terminated = true;
+                    }),
+                    Task.Run(async () => { 
+                        // check for closed
+                        while (!connection.IsClosed() && !_terminated)
+                        {
+                            await Task.Delay(2000);
+                        }
+                    })
+                });
             }
             catch (Exception e)
             {
@@ -103,7 +108,6 @@ namespace OpcCollector
                 connection?.Disconnect();
                 connection?.Dispose();
             }
-
         }
     }
 }

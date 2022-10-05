@@ -10,6 +10,7 @@ namespace OpcCollector.Processor.InfluxDB
     {
         public string Token;
         public string Bucket;
+        public string MonitorBucket;
         public string Org;
         public string Url;
     }

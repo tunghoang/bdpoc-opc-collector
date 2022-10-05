@@ -132,19 +132,21 @@ namespace OpcCollector.Collector
             _subscription.ModifyState((int)TsCDaStateMask.Active, _state);
         }
 
-        public TsCDaItemResult[] AddItems(TsCDaItem[] items)
+        public int AddItems(TsCDaItem[] items)
         {
+            int nerror = 0;
 
             var itemResults = _subscription.AddItems(items);
             foreach (var item in itemResults)
             {
                 if (item.Result.IsError())
                 {
+                    nerror++;
                     Logger.Warn("Item `{0}` could not be add to group: {1}. code={2}", item.ItemName, item.Result.Description(), item.Result.Code);
                 }
             }
 
-            return itemResults;
+            return nerror;
         }
 
         public OpcItemResult[] RemoveItems(TsCDaItem[] items)

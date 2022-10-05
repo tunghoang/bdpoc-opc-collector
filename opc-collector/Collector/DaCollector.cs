@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Technosoftware.DaAeHdaClient.Da;
+using System.Diagnostics;
+using System.Windows.Media;
 
 namespace OpcCollector.Collector
 {
@@ -15,13 +17,17 @@ namespace OpcCollector.Collector
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
+        private static int elapsedOffset = 500;
+
         public DaConnection Conn { get; }
         private DataInfoConfig _dataInfoConf;
         private DaCollectorOptions _opts;
 
         internal List<IProcessor> processors = new List<IProcessor>();
         private bool _isRunning = false;
+        private CollectorMetric metric = new CollectorMetric();
         private Dictionary<string, DaSubscriber> subs = new Dictionary<string, DaSubscriber>();
+        private Accumulator<OnDataArgs> acc;
 
         public bool IsRunning => _isRunning;
 
@@ -32,7 +38,7 @@ namespace OpcCollector.Collector
             _opts = opts;
         }
 
-        public DaCollector(DaConnection conn, DataInfoConfig dataInfoConf) : this(conn, dataInfoConf, new DaCollectorOptions { ItemPerSub = 50, SampleRate = 1000 }) { }
+        public DaCollector(DaConnection conn, DataInfoConfig dataInfoConf) : this(conn, dataInfoConf, new DaCollectorOptions()) { }
 
 
         public void Register(IProcessor processor)
@@ -66,25 +72,92 @@ namespace OpcCollector.Collector
                 initDevice(devConf);
             }
 
+            // init accumulator
+            acc = new Accumulator<OnDataArgs>(metric.TotalTag * (_opts.FlushRate * 2));
         }
 
-        public void RunAsync()
+        public async Task RunAsync()
         {
             if (_isRunning)
             {
                 return;
             }
 
+            Logger.Info("Init DaCollector");
             init();
 
-            Logger.Info("Starting");
+            Logger.Info("Run accumulator");
+            acc.Run();
 
+            Logger.Info("Accept OPC Event");
             foreach (var subKV in subs)
             {
                 subKV.Value.Resume();
             }
 
             _isRunning = true;
+
+            Logger.Info("Run FlushLoop");
+            var fLoop = flushLoop();
+
+            await fLoop;
+        }
+
+        private async Task flushLoop()
+        {
+            Stopwatch timer = Stopwatch.StartNew();
+            DateTime startTime = DateTime.Now;
+
+            while (_isRunning)
+            {
+                // start timer
+                Logger.Debug("Enter Loop at {0}", startTime.ToString());
+                timer.Reset();
+                timer.Start();
+
+                // flushing
+                DateTime lastTime = startTime;
+                OnDataArgs[] items = acc.Flush();
+                startTime = DateTime.Now;
+
+                int totalItem = items.Sum(i => i.values.Length);
+                foreach (var processor in processors)
+                {
+                    try
+                    {
+                        processor.Apply(items, metric);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error(e, "Cannot call Apply of {0}", processor.GetType());
+                    }
+                }
+
+                // wait for next tick or skip if over
+                timer.Stop();
+                if (timer.ElapsedMilliseconds > (_opts.FlushRate / 2))
+                {
+                    Logger.Warn("last flush loop spent too much times: {0} ms for {1} buffered", timer.ElapsedMilliseconds, totalItem);
+                }
+
+                double elapsed = Math.Ceiling(startTime.Subtract(lastTime).TotalMilliseconds);
+                int wait = _opts.FlushRate - Convert.ToInt32(timer.ElapsedMilliseconds) % _opts.FlushRate - startTime.Millisecond + 500;
+
+                metric.FlushTicks = timer.ElapsedTicks;
+                // TODO: calculate with SampleRate
+                metric.CollectRate = (double)totalItem / (elapsed) * 1000.0; // elasped time (ms) - 500 ms in order to hope that will improve precision
+                metric.LastBuffered = totalItem;
+
+                Logger.Debug("metric {0} {1} {2} {3} {4} {5} {6}", metric.CollectRate, timer.ElapsedMilliseconds, metric.LastBuffered, elapsed, wait, metric.TotalSubscriber, metric.TotalTag);
+
+                // if current loop spent more time than one flush tick, skip waiting
+                if (timer.ElapsedMilliseconds < _opts.FlushRate)
+                {
+                    await Task.Delay(wait);
+                }
+            }
+
+            Logger.Info("Flush Loop Stopped");
         }
 
         public void Stop()
@@ -98,6 +171,8 @@ namespace OpcCollector.Collector
             {
                 subKV.Value.Pause();
             }
+
+            acc.Close();
 
             _isRunning = false;
 
@@ -120,18 +195,7 @@ namespace OpcCollector.Collector
 
         private void onDataHandler(OnDataArgs args)
         {
-            foreach (var processor in processors)
-            {
-                try
-                {
-                    processor.Apply(args);
-                }
-                catch (Exception e)
-                {
-                    Logger.Error(e, "Cannot call Apply of {0}", processor.GetType());
-                }
-
-            }
+            acc.Add(args);
         }
 
         private void initDevice(DeviceConfig devConf)
@@ -153,7 +217,9 @@ namespace OpcCollector.Collector
                 {
                     var sub = newSubscriber($"{devConf.Name}::{i}::{Guid.NewGuid()}");
                     sub.Metadata = devConf;
-                    sub.AddItems(part.ToArray());
+                    int nerror = sub.AddItems(part.ToArray());
+                    metric.TotalTag += part.Count - nerror;
+                    metric.TotalSubscriber++;
                     part.Clear();
                 }
 
@@ -164,7 +230,7 @@ namespace OpcCollector.Collector
         {
             var sub = Conn.Subscribe(new TsCDaSubscriptionState { Name = subName, Active = false, UpdateRate = _opts.SampleRate });
 
-            sub.OnData(this.onDataHandler);
+            sub.OnData(onDataHandler);
 
             subs.Add(sub.sid, sub);
 
@@ -175,8 +241,32 @@ namespace OpcCollector.Collector
 
     public class DaCollectorOptions
     {
-        public int ItemPerSub;
-        public int SampleRate;
+        public int ItemPerSub = 50;
+        public int SampleRate = 1000;
+        public int FlushRate = 5000;
+
+        public static DaCollectorOptions ParseCollectorCfg(Dictionary<string, string> collectorConfig)
+        {
+            var opts = new DaCollectorOptions();
+
+            if (collectorConfig.ContainsKey("ITEM_PER_SUBSCRIBER"))
+            {
+                opts.ItemPerSub = Int32.Parse(collectorConfig["ITEM_PER_SUBSCRIBER"]);
+            }
+
+            if (collectorConfig.ContainsKey("SAMPLE_RATE"))
+            {
+                opts.SampleRate = Int32.Parse(collectorConfig["SAMPLE_RATE"]);
+            }
+
+            if (collectorConfig.ContainsKey("FLUSH_RATE"))
+            {
+                opts.FlushRate = Int32.Parse(collectorConfig["FLUSH_RATE"]);
+            }
+
+            return opts;
+
+        }
     }
 
 }

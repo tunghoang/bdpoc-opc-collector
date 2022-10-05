@@ -1,4 +1,5 @@
-﻿using OpcCollector.Collector.SubscriberEvent;
+﻿using OpcCollector.Collector;
+using OpcCollector.Collector.SubscriberEvent;
 using OpcCollector.Common;
 using System;
 using System.Collections.Generic;
@@ -11,7 +12,15 @@ namespace OpcCollector.Processor.Console0
 {
     public class ConsoleProcessor : IProcessor
     {
-        public void Apply(OnDataArgs args)
+        public void Apply(OnDataArgs[] args, CollectorMetric metric)
+        {
+            foreach (var arg in args)
+            {
+                ApplyOne(arg);
+            }
+        }
+
+        public void ApplyOne(OnDataArgs args)
         {
             var devConf = (DeviceConfig)args.metadata;
             var requestHandle = args.requestHandle;

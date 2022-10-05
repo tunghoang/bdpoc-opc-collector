@@ -1,4 +1,5 @@
-﻿using OpcCollector.Collector.SubscriberEvent;
+﻿using OpcCollector.Collector;
+using OpcCollector.Collector.SubscriberEvent;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,6 @@ namespace OpcCollector.Processor
 {
     public interface IProcessor
     {
-        void Apply(OnDataArgs args);
+        void Apply(OnDataArgs[] args, CollectorMetric metric);
     }
 }

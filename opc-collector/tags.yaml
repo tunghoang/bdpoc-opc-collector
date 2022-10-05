@@ -1,0 +1,116 @@
+devices:
+  - name: device_1
+    tags:
+      - tag_number: Random.Boolean
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Money
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Qualities
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Real4
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Real8
+        checks:
+          - type: NaNCheck
+          - type: OverRangeCheck
+            params:
+              - low: 0
+                high: 100
+      - tag_number: Random.UInt1
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.UInt2
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.UInt8
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Uint4
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.String
+        checks:
+          - type: NaNCheck
+      - tag_number: Unknown.UInt8
+        checks:
+          - type: NaNCheck
+  - name: device_2
+    tags:
+      - tag_number: tag2.1
+        checks:
+          - type: NaNCheck
+          - type: OverRangeCheck
+            params:
+              - low: 0
+                high: 100
+      - tag_number: tag2.2
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Boolean
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Money
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Qualities
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Real4
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Real8
+        checks:
+          - type: NaNCheck
+          - type: OverRangeCheck
+            params:
+              - low: 0
+                high: 100
+      - tag_number: Random.UInt1
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.UInt2
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.UInt8
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Uint4
+        checks:
+          - type: NaNCheck
+  - name: device_3
+    tags:
+      - tag_number: Random.Boolean
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Money
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Qualities
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Real4
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Real8
+        checks:
+          - type: NaNCheck
+          - type: OverRangeCheck
+            params:
+              - low: 0
+                high: 100
+      - tag_number: Random.UInt1
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.UInt2
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.UInt8
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Uint4
+        checks:
+          - type: NaNCheck
