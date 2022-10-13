@@ -2,16 +2,11 @@ using OpcCollector.Collector;
 using OpcCollector.Common;
 using OpcCollector.Processor.InfluxDB;
 using System;
-using System.Collections.ObjectModel;
-using System.Data.Common;
-using System.Globalization;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Technosoftware.DaAeHdaClient;
 
 
-namespace OpcCollector
+namespace DACollectord
 {
 
     class Collectord

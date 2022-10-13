@@ -1,4 +1,5 @@
 ﻿DA_SERVER_URL: opcda://localhost/Matrikon.OPC.Simulation.1
+#DA_SERVER_URL: opcda://PDM-INTEG/OPC.PHDServerDA.1
 HDA_SERVER_URL: opchda://localhost/Matrikon.OPC.Simulation.1
 ITEM_PER_SUBSCRIBER: 50
 SAMPLE_RATE: 1000

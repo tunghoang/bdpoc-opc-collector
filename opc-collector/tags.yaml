@@ -1,4 +1,12 @@
 devices:
+  - name: device_0
+    tags:
+      - tag_number: Random.Int8
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Int1
+        checks:
+          - type: NaNCheck
   - name: device_1
     tags:
       - tag_number: Random.Boolean
@@ -29,7 +37,19 @@ devices:
       - tag_number: Random.UInt8
         checks:
           - type: NaNCheck
-      - tag_number: Random.Uint4
+      - tag_number: Random.UInt4
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Int1
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Int2
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Int8
+        checks:
+          - type: NaNCheck
+      - tag_number: Random.Int4
         checks:
           - type: NaNCheck
       - tag_number: Random.String

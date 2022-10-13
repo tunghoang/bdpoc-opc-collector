@@ -10,6 +10,6 @@ namespace OpcCollector.Processor
 {
     public interface IProcessor
     {
-        void Apply(OnDataArgs[] args, CollectorMetric metric);
+        void Apply(CollectorData[] datum, DaCollectorMetric metric);
     }
 }

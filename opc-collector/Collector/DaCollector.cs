@@ -13,28 +13,25 @@ using System.Windows.Media;
 namespace OpcCollector.Collector
 {
 
-    public class DaCollector : IDisposable
+    public class DaCollector : BaseCollector, IDisposable
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
         private static int elapsedOffset = 500;
 
         public DaConnection Conn { get; }
-        private DataInfoConfig _dataInfoConf;
         private DaCollectorOptions _opts;
 
         internal List<IProcessor> processors = new List<IProcessor>();
-        private bool _isRunning = false;
-        private CollectorMetric metric = new CollectorMetric();
+        private DaCollectorMetric metric = new DaCollectorMetric();
         private Dictionary<string, DaSubscriber> subs = new Dictionary<string, DaSubscriber>();
-        private Accumulator<OnDataArgs> acc;
+        private Accumulator<CollectorData> acc;
 
         public bool IsRunning => _isRunning;
 
-        public DaCollector(DaConnection connection, DataInfoConfig dataInfoConf, DaCollectorOptions opts)
+        public DaCollector(DaConnection connection, DataInfoConfig dataInfoConf, DaCollectorOptions opts) : base(dataInfoConf)
         {
             Conn = connection;
-            _dataInfoConf = dataInfoConf;
             _opts = opts;
         }
 
@@ -73,7 +70,7 @@ namespace OpcCollector.Collector
             }
 
             // init accumulator
-            acc = new Accumulator<OnDataArgs>(metric.TotalTag * (_opts.FlushRate * 2));
+            acc = new Accumulator<CollectorData>(metric.TotalTag * (_opts.FlushRate * 4));
         }
 
         public async Task RunAsync()
@@ -117,10 +114,10 @@ namespace OpcCollector.Collector
 
                 // flushing
                 DateTime lastTime = startTime;
-                OnDataArgs[] items = acc.Flush();
+                CollectorData[] items = acc.Flush();
                 startTime = DateTime.Now;
 
-                int totalItem = items.Sum(i => i.values.Length);
+                int totalItem = items.Length;
                 foreach (var processor in processors)
                 {
                     try
@@ -195,7 +192,30 @@ namespace OpcCollector.Collector
 
         private void onDataHandler(OnDataArgs args)
         {
-            acc.Add(args);
+            queueData(args);
+        }
+
+        private async Task queueData(OnDataArgs args)
+        {
+            foreach (var item in args.values)
+            {
+                if (item.Result.IsSuccess())
+                {
+                    await acc.AddAsync(new CollectorData
+                    {
+                        metadata = new[] { args.metadata, args.requestHandle, args.subscriptionHandle },
+                        TagNumber = item.ItemName,
+                        TagValue = item.Value,
+                        Timestamp = item.Timestamp.ToUniversalTime()
+                    });
+                }
+                else
+                {
+                    Logger.Warn("Received failed item: '{0}' at {1}", item.ItemName, item.Timestamp);
+                }
+
+                // TODO: handle failed case
+            }
         }
 
         private void initDevice(DeviceConfig devConf)
@@ -268,5 +288,4 @@ namespace OpcCollector.Collector
 
         }
     }
-
 }

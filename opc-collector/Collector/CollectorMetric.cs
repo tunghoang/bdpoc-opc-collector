@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace OpcCollector.Collector
 {
-    public class CollectorMetric
+    public class DaCollectorMetric
     {
         public double CollectRate = 0;
         public long FlushTicks = 0;

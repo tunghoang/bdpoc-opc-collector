@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{D3E159FA-65D1-4B31-B83F-61DF127266A5}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <RootNamespace>OpcCollector</RootNamespace>
     <AssemblyName>OpcCollector</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
@@ -32,6 +32,9 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="CsvHelper, Version=28.0.0.0, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
@@ -145,7 +148,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Collector\BaseCollector.cs" />
+    <Compile Include="Collector\CollectorData.cs" />
     <Compile Include="Collector\CollectorMetric.cs" />
+    <Compile Include="Collector\HdaCollector.cs" />
     <Compile Include="Collector\DaCollector.cs" />
     <Compile Include="Collector\ConnectionOption.cs" />
     <Compile Include="Collector\HdaConnection.cs" />
@@ -154,8 +160,6 @@
     <Compile Include="Collector\IConnetion.cs" />
     <Compile Include="Common\Accumulator.cs" />
     <Compile Include="Common\Buffer.cs" />
-    <Compile Include="OpcHdaSample.cs" />
-    <Compile Include="Collectord.cs" />
     <Compile Include="Processor\Console0\ConsoleProcessor.cs" />
     <Compile Include="Processor\InfluxDB\InfluxDBProcessor.cs" />
     <Compile Include="Processor\InfluxDB\InfluxDBProcessorOptions.cs" />
@@ -165,8 +169,6 @@
     <Compile Include="Collector\SubscriberEvent.cs" />
     <Compile Include="Common\Config.cs" />
     <Compile Include="Common\Exception.cs" />
-    <Compile Include="OpcSample.cs" />
-    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -177,10 +179,10 @@
     <None Include="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="packages.config" />
     <None Include="tags.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Library\Technosoftware\DaAeHdaClient\Technosoftware.DaAeHdaClient.csproj">

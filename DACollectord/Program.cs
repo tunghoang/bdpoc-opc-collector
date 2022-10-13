@@ -1,11 +1,7 @@
 ﻿using OpcCollector.Common;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace OpcCollector
+namespace DACollectord
 {
     internal class Program
     {
@@ -19,12 +15,6 @@ namespace OpcCollector
 
                 ConfigMgr.Init();
                 Logger.Info("ConfigMgr loaded.");
-
-                //var myOpcSample = new OpcSample();
-                //myOpcSample.Run();
-
-                //var myOpcHdaSample = new OpcHdaSample();
-                //myOpcHdaSample.Run();
 
                 var collectord = new Collectord();
                 collectord.Run();
