@@ -33,11 +33,11 @@ namespace DACollectord
             };
         }
 
-        public void Run()
+        public async Task Run()
         {
             setupGracefulShutdown();
 
-            Task.WaitAll(_run());
+            await _run();
 
             //while (!_terminated)
             //{
@@ -78,12 +78,14 @@ namespace DACollectord
                 }));
 
                 // run collector
-                await Task.WhenAny(new[] {
+                var completedTask = await Task.WhenAny(new[] {
                     Task.Run(async () => {
                         await collector.RunAsync();
                         _terminated = true;
                     }),
-                    Task.Run(async () => { 
+                    Task.Run(async () => {
+                        // bootstrap wait
+                        await Task.Delay(1000 * 30);
                         // check for closed
                         while (!connection.IsClosed() && !_terminated)
                         {
@@ -91,6 +93,8 @@ namespace DACollectord
                         }
                     })
                 });
+
+                await completedTask;
             }
             catch (Exception e)
             {

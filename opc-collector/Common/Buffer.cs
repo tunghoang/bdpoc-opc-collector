@@ -91,7 +91,7 @@ namespace OpcCollector.Common
         {
             int dropped = buf.Count;
             buf.Clear();
-            last = 0;
+            last = -1;
 
             return dropped;
         }

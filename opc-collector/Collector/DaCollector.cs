@@ -60,8 +60,6 @@ namespace OpcCollector.Collector
                 throw new DaConnectionClosedException();
             }
 
-            clean();
-
             Logger.Info("Init: Devices={0}", _dataInfoConf.Devices.Length);
 
             foreach (var devConf in _dataInfoConf.Devices)
@@ -70,7 +68,7 @@ namespace OpcCollector.Collector
             }
 
             // init accumulator
-            acc = new Accumulator<CollectorData>(metric.TotalTag * (_opts.FlushRate * 4));
+            acc = new Accumulator<CollectorData>(metric.TotalTag * (_opts.FlushRate / 1000 * 4));
         }
 
         public async Task RunAsync()

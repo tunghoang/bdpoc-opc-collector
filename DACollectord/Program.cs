@@ -1,5 +1,6 @@
 ﻿using OpcCollector.Common;
 using System;
+using System.Threading.Tasks;
 
 namespace DACollectord
 {
@@ -17,7 +18,8 @@ namespace DACollectord
                 Logger.Info("ConfigMgr loaded.");
 
                 var collectord = new Collectord();
-                collectord.Run();
+                Task.WaitAll(collectord.Run());
+                //collectord.Run();
 
             }
             catch (Exception e)
