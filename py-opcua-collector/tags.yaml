@@ -1,0 +1,28 @@
+devices:
+- label: G6
+  name: G6
+  tags:
+  - tag_number: 1
+    type: numeric
+    namespace: 2
+  - tag_number: 2
+    type: numeric
+    namespace: 2
+  - tag_number: 3
+    type: numeric
+    namespace: 2
+  - tag_number: "4"
+    type: string
+    namespace: 3
+- label: Other
+  name: Other
+  tags: 
+  - tag_number: 1
+    type: numeric
+    namespace: 2
+  - tag_number: 2
+    type: numeric
+    namespace: 2
+  - tag_number: 3
+    type: numeric
+    namespace: 2
