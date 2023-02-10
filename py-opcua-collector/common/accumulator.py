@@ -2,8 +2,10 @@
 class BufferEmpty(Exception):
     pass
 
-
 class BufferFull(Exception):
+    pass
+
+class BufferIllegalArgument(Exception):
     pass
 
 
@@ -12,6 +14,8 @@ class Buffer:
 
     def __init__(self, maxsize: int = 0):
         self.maxsize = maxsize
+        if maxsize == 0:
+            raise BufferIllegalArgument()
         self._buf = [None] * maxsize
         self._len = 0
         self._last = -1

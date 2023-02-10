@@ -51,8 +51,11 @@ class InfluxDBProcessor(BaseProcessor):
             self._batch_write(points)
 
             if self.options.monitor_bucket != "" and isinstance(metric, UaCollectorMetric):
-                metric_point = Point("py_collector_metric").field(
-                    "collect_rate", metric.collect_rate)
+                metric_point = Point("py_collector_metric") \
+                                .field("collect_rate", metric.collect_rate) \
+                                .tag("location", metric.opts.location) \
+                                .tag("type", metric.opts.type)
+
                 self._write_api.write(
                     bucket=self.options.monitor_bucket, org=self.options.org, record=metric_point)
 

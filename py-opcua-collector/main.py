@@ -1,5 +1,6 @@
 import asyncio
 import os
+import argparse
 
 import common.logger as logging
 from collector.collector import UaCollector, UaCollectorOptions
@@ -10,8 +11,12 @@ from processor.influxdb import InfluxDBProcessor, InfluxDBProcessorOptions
 
 logger = logging.getLogger('py_ua_collectord')
 
+# Commandline Argument Parsing
+parser = argparse.ArgumentParser()
+parser.add_argument('--location', default="*", help='node location')
+parser.add_argument('--type', default="*", help='node type')
 
-async def main():
+async def main(args):
     # init config
     diconfig = parse_config(os.getcwd())
     colter_conf = diconfig.collector_config
@@ -20,7 +25,7 @@ async def main():
         ua_connection = UaConnection(client)
         colter = UaCollector(
             ua_connection, diconfig.data_info_config,
-            UaCollectorOptions(item_per_sub=colter_conf["ITEM_PER_SUBSCRIBER"],
+            UaCollectorOptions(location=args.location, type_=args.type, item_per_sub=colter_conf["ITEM_PER_SUBSCRIBER"],
                                sample_rate=colter_conf["SAMPLE_RATE"], flush_rate=colter_conf["FLUSH_RATE"])
         )
         colter.register(
@@ -36,4 +41,6 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    args = parser.parse_args()
+
+    asyncio.run(main(args))

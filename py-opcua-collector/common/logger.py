@@ -6,6 +6,6 @@ logging.basicConfig(
 
 def getLogger(name):
     log = logging.getLogger(name)
-    log.setLevel(logging.DEBUG)
+    log.setLevel(logging.INFO)
     
     return log

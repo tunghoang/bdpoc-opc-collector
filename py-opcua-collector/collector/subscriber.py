@@ -7,6 +7,12 @@ from asyncua import ua
 import common.logger as logging
 from .exception import *
 
+class UaNode:
+
+    def __init__(self, node, metadata = None):
+        self.n = node
+        self.metadata: Any = metadata
+
 
 class UaSubscriber:
     """docstring for Subscriber."""
