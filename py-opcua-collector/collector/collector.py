@@ -160,8 +160,9 @@ class UaCollector:
                 if location != "*" and tokens[0] != location:
                     continue
 
-                if type_ != "*" and not tokens[1].startswith(type_):
+                if type_ != "*" and re.search(type_, tokens[1]) is None:
                     continue
+
                 self.logger.info("--> %s", ua_node.metadata)
                 nodes.append(n)
                 labels.append(ua_node.metadata)
