@@ -149,6 +149,8 @@ class UaCollector:
         type_ = self._opts.type
         
         labels = []
+        tagListFile = open(f'/tmp/taglist-{location}-{type_}.txt', 'w')
+
         for n in childs:
             ua_node = await self._create_ua_node(n)
             if ua_node is not None:
@@ -165,11 +167,13 @@ class UaCollector:
                     continue
 
                 self.logger.info("--> %s", ua_node.metadata)
+                tagListFile.write(ua_node.metadata)
                 nodes.append(n)
                 labels.append(ua_node.metadata)
 
         self.logger.info("total node after filter(location=%s, type=%s): %s/%s", location, type_, len(nodes), len(childs))
         self.logger.info("%s", ",".join(labels))
+        tagListFile.close()
         await self._init_sub(nodes, dev_conf)
 
     async def _init_sub(self, nodes, metadata):
