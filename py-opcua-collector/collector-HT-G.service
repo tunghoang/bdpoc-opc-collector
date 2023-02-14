@@ -1,0 +1,10 @@
+[Unit]
+Description=Collector for MT1 tags
+
+[Service]
+User=data_col
+WorkingDirectory=/home/data_col/bdpoc-opc-collector/py-opcua-collector
+ExecStart=/home/data_col/bdpoc-opc-collector/py-opcua-collector/env/bin/python /home/data_col/bdpoc-opc-collector/py-opcua-collector/main.py --location=HT --type='^G'
+
+[Install]
+WantedBy=multi-user.target
