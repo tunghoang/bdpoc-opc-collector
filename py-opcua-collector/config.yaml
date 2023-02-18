@@ -1,5 +1,5 @@
-#UA_SERVER_URL: opc.tcp://localhost:4840/opcua
-UA_SERVER_URL: opc.tcp://10.4.4.88:6100
+UA_SERVER_URL: opc.tcp://localhost:4840/freeopcua/server
+#UA_SERVER_URL: opc.tcp://10.4.4.88:6100
 ITEM_PER_SUBSCRIBER: 100
 SAMPLE_RATE: 1000
 FLUSH_RATE: 5000

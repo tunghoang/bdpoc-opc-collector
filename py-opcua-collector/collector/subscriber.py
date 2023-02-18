@@ -101,7 +101,7 @@ class UaSubscriber:
         """asyncua SubHandler implementation"""
         self.logger.debug("on data change. node=%s val=%s ts=%s", node, val, data.monitored_item.Value.SourceTimestamp)
         for handler in self._ondata_handlers:
-            handler(self, node, val, data)
+            handler(self, node, val, data.monitored_item.Value)
 
     def event_notification(self, event):
         """asyncua SubHandler implementation"""

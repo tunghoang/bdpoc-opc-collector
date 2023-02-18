@@ -9,6 +9,7 @@ from .subscriber import UaSubscriber, UaNode
 from common.config import DataInfoConfig, DeviceConfig, TagConfig
 from common.accumulator import Buffer
 from time import monotonic_ns as time
+from datetime import timedelta
 
 
 class CollectorData:
@@ -62,15 +63,17 @@ class UaCollector:
     async def get_data_root(self):
         objnode = self.conn.c.nodes.objects
         childs = await objnode.get_children()
+        # path = ["0:Objects", "1:PHDServer"]
+        # => hard-coded index of PHDServer Object
         data_root = childs[1]
         return data_root
 
-    async def run(self):
+    async def run(self, args):
         if self._loop is not None:
             return self._loop
 
         self.logger.info("Init UaCollector")
-        await self._init()
+        await self._init(args)
 
         self.logger.info("Consume data change notification")
         await self._start_subs()
@@ -89,32 +92,48 @@ class UaCollector:
         await self._stop_subs()
         self.running = False
 
+    async def history_collect(self, args):
+        if self._loop is not None:
+            return self._loop
+
+        self.logger.info("Init UaCollector {read_mode=true}")
+        (devc, ua_nodes) = await self._init(args)
+
+        self.logger.info("Start history collection")
+        await self._history_read(args, ua_nodes, devc)
+
+        self.logger.info("Completed history collection")
+
     def register(self, processor):
         self._processors.append(processor)
 
     def un_register(self, processor):
         self._processors.remove(processor)
 
-    async def _init(self):
+    async def _init(self, args, read_mode=False):
         if len(self._subs) > 0:
-            return
+            return (None, [])
 
         # self.logger.info("Init: Devices=%s", len(self.diconfig.devices))
 
         # for devc in self.diconfig.devices:
         #     await self._init_device(devc)
 
-        devc = DeviceConfig('phdpeer', []) 
-        await self._init_all_node(devc)
+        devc = DeviceConfig('phdpeer', [])
+        ua_nodes = await self._get_all_node(args, devc)
 
-        self._acc = Buffer(self._metric.total_tag *
-                           (int(self._opts.flush_rate/1e3) * 3))
+        if not read_mode:
+            await self._init_sub(ua_nodes, devc)
+            self._acc = Buffer(self._metric.total_tag *
+                               (int(self._opts.flush_rate/1e3) * 3))
 
-    def _on_data_handler(self, subr, node, val, data: DataChangeNotif):
+        return (devc, ua_nodes)
+
+    def _on_data_handler(self, subr, node, val, data):
         ua_node = self.node_dict[node]
         tag_name = ua_node.metadata
         self._acc.add(CollectorData(metadata=subr.metadata,
-                      node=tag_name, value=val, timestamp=data.monitored_item.Value.SourceTimestamp))
+                      node=tag_name, value=val, timestamp=data.SourceTimestamp))
 
     async def _new_subscriber(self):
         subr = await self.conn.subscribe(self._opts.sample_rate)
@@ -139,15 +158,14 @@ class UaCollector:
 
             return None
 
-
-    async def _init_all_node(self, dev_conf):
+    async def _get_all_node(self, args, dev_conf):
         root = await self.get_data_root()
 
         childs = await root.get_children()
         nodes = []
-        location = self._opts.location
-        type_ = self._opts.type
-        
+        location = args.location
+        type_ = args.type
+
         labels = []
         tagListFile = open(f'/tmp/taglist-{location}-{type_}.txt', 'w')
 
@@ -168,25 +186,28 @@ class UaCollector:
 
                 self.logger.info("--> %s", ua_node.metadata)
                 tagListFile.write(ua_node.metadata)
-                nodes.append(n)
+                nodes.append(ua_node)
                 labels.append(ua_node.metadata)
 
-        self.logger.info("total node after filter(location=%s, type=%s): %s/%s", location, type_, len(nodes), len(childs))
+        self.logger.info("total node after filter(location=%s, type=%s): %s/%s",
+                         location, type_, len(nodes), len(childs))
         self.logger.info("%s", ",".join(labels))
         tagListFile.close()
-        await self._init_sub(nodes, dev_conf)
 
-    async def _init_sub(self, nodes, metadata):
+        return nodes
+
+    async def _init_sub(self, ua_nodes, metadata):
         i = 0
         item_per_sub = self._opts.item_per_sub
 
-        while i < len(nodes):
-            sub_nodes = nodes[i:i+item_per_sub]
+        while i < len(ua_nodes):
+            sub_nodes = [ua_node.n for ua_node in ua_nodes[i:i+item_per_sub]]
             # TODO: add check Node exists
             subr = await self._new_subscriber()
             subr.metadata = metadata
             nerr = await subr.add_items(sub_nodes) or 0
-            self.logger.info("init subscribe, nodes: %s/%s", len(sub_nodes) - nerr, len(sub_nodes))
+            self.logger.info("init subscribe, nodes: %s/%s",
+                             len(sub_nodes) - nerr, len(sub_nodes))
             self._metric.total_tag += len(sub_nodes) - nerr
 
             i += item_per_sub
@@ -205,6 +226,43 @@ class UaCollector:
     async def _stop_subs(self):
         for subr in self._subs:
             await subr.stop()
+
+    async def _process_items(self, items, metric=None):
+        for processor in self._processors:
+            try:
+                processor.apply(items, metric)
+            except Exception as ex:
+                self.logger.error("call apply of %r err: %r",
+                                  type(processor).__name__, ex)
+
+    async def _history_read(self, args, ua_nodes, devc):
+        limit = args.limit
+        starttime = args.starttime
+        endtime = args.endtime
+
+        # truncate time period to limit the number of item per read
+        # default rate=1s => limit 1000 item/read = 1000s
+        start = starttime
+        while start < endtime:
+            # calculate end_time
+            end = start + timedelta(seconds=limit)
+            if end > endtime:
+                end = endtime
+
+            # fetch and process
+            for ua_node in ua_nodes:
+                tag_name = ua_node.metadata
+                values = await ua_node.n.read_raw_history(start, end)
+                items = [CollectorData(metadata=devc, node=tag_name, value=data.Value.Value,
+                                       timestamp=data.SourceTimestamp) for data in values]
+
+                self.logger.info(
+                    f"{tag_name} start={start} end={end} received={len(items)}")
+
+                await self._process_items(items)
+
+            # next iteration
+            start = end
 
     async def _flush_loop(self):
         start_time = time()
